@@ -21,7 +21,7 @@ module HealthCheck
     def self.process_checks(checks, called_from_middleware = false)
       errors = ''
       response = {}
-      response[:body] ||= []
+      body = []
       checks.each do |check|
         case check
           when 'and', 'site'
@@ -116,7 +116,11 @@ module HealthCheck
 
         end
         binding.pry
-        response[:body] << {
+        if check == "all" || check == "full"
+          body = full_error_check[:body]
+          errors = full_error_check[:errors]
+        end
+        body << {
           name: check,
           healthy: error_check == "",
           error: error_check
@@ -126,11 +130,8 @@ module HealthCheck
         binding.pry
       end
       response[:errors] = errors.strip
-      if check == "all" || check == "full"
-        return full_error_check
-      else
-        return response
-      end
+      response[:body] = body
+      return response
       # return errors.strip
     # rescue => e
     #   return e.message
