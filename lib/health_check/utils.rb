@@ -28,8 +28,7 @@ module HealthCheck
           when 'and', 'site'
             # do nothing
           when "database"
-            error_check = HealthCheck::Utils.get_database_version
-            errors << error_check
+            HealthCheck::Utils.get_database_version
           when "email"
             error_check = HealthCheck::Utils.check_email
             errors << error_check
