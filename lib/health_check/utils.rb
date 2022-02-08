@@ -115,7 +115,6 @@ module HealthCheck
             end
 
         end
-        binding.pry
         if check == "all" || check == "full"
           body = full_error_check[:body]
           errors = full_error_check[:errors]
@@ -133,6 +132,7 @@ module HealthCheck
         end
         binding.pry
       end
+      binding.pry
       response[:errors] = errors.strip
       response[:body] = body
       return response
