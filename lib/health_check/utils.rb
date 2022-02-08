@@ -130,11 +130,10 @@ module HealthCheck
 
           errors << '. ' unless errors == '' || errors.end_with?('. ')
         end
-        binding.pry
       end
-      binding.pry
       response[:errors] = errors.strip
       response[:body] = body
+      binding.pry
       return response
       # return errors.strip
     # rescue => e
