@@ -20,6 +20,7 @@ module HealthCheck
     # process an array containing a list of checks
     def self.process_checks(checks, called_from_middleware = false)
       errors = ''
+      error_check = ""
       response = {}
       body = []
       checks.each do |check|
@@ -91,8 +92,7 @@ module HealthCheck
             error_check = HealthCheck::RabbitMQHealthCheck.check
             errors << error_check
           when "standard"
-            error_check = HealthCheck::Utils.process_checks(HealthCheck.standard_checks, called_from_middleware)
-            errors << error_check
+            standard_error_check = HealthCheck::Utils.process_checks(HealthCheck.standard_checks, called_from_middleware)
           when "middleware"
             message = "Health check not called from middleware - probably not installed as middleware."
             error_check = message unless called_from_middleware
@@ -119,6 +119,9 @@ module HealthCheck
         if check == "all" || check == "full"
           body = full_error_check[:body]
           errors = full_error_check[:errors]
+        elsif check == "standard"
+          body = standard_error_check[:body]
+          errors = standard_error_check[:errors]
         end
         body << {
           name: check,
