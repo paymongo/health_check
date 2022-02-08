@@ -26,7 +26,7 @@ module HealthCheck
         end
         response.headers['Cache-Control'] = "must-revalidate, max-age=#{max_age}"
         if errors.blank?
-          send_response true, nil, :ok, :ok
+          send_response true, nil, :ok, :ok, checks
           if HealthCheck.success_callbacks
             HealthCheck.success_callbacks.each do |callback|
               callback.call(checks)
