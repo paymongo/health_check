@@ -54,7 +54,7 @@ module HealthCheck
 
     def send_response(healthy, msg, text_status, obj_status, process_errors)
       msg ||= healthy ? HealthCheck.success : HealthCheck.failure
-      obj = { healthy: healthy, message: msg, body: process_errors[:body]}
+      obj = { healthy: healthy, message: msg, body: process_errors}
       respond_to do |format|
         format.html { render plain: msg, status: text_status, content_type: 'text/plain' }
         format.json { render json: obj, status: obj_status }
