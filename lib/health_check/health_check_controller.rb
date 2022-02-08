@@ -21,7 +21,8 @@ module HealthCheck
         checks -= HealthCheck.middleware_checks if HealthCheck.installed_as_middleware
         binding.pry
         begin
-          errors = HealthCheck::Utils.process_checks(checks)
+          process_errors = HealthCheck::Utils.process_checks(checks)
+          errors = process_errors[:errors]
         rescue Exception => e
           errors = e.message.blank? ? e.class.to_s : e.message.to_s
         end
@@ -35,7 +36,7 @@ module HealthCheck
           end
         else
           msg = HealthCheck.include_error_in_response_body ? "#{HealthCheck.failure}: #{errors}" : nil
-          send_response false, msg, HealthCheck.http_status_for_error_text, HealthCheck.http_status_for_error_object, params[:checks]
+          send_response false, msg, HealthCheck.http_status_for_error_text, HealthCheck.http_status_for_error_object, process_errors
 
           # Log a single line as some uptime checkers only record that it failed, not the text returned
           msg = "#{HealthCheck.failure}: #{errors}"
@@ -51,9 +52,9 @@ module HealthCheck
 
     protected
 
-    def send_response(healthy, msg, text_status, obj_status, checks)
+    def send_response(healthy, msg, text_status, obj_status, process_errors)
       msg ||= healthy ? HealthCheck.success : HealthCheck.failure
-      obj = { healthy: healthy, message: msg, object: checks}
+      obj = { healthy: healthy, message: msg, body: process_errors[:body]}
       respond_to do |format|
         format.html { render plain: msg, status: text_status, content_type: 'text/plain' }
         format.json { render json: obj, status: obj_status }
