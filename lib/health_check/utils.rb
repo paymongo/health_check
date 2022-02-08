@@ -104,8 +104,7 @@ module HealthCheck
               end
             end
           when "all", "full"
-            error_check = HealthCheck::Utils.process_checks(HealthCheck.full_checks, called_from_middleware)
-            errors << error_check
+            full_error_check = HealthCheck::Utils.process_checks(HealthCheck.full_checks, called_from_middleware)
           else
             if HealthCheck.custom_checks.include? check
                HealthCheck.custom_checks[check].each do |custom_check|
@@ -125,7 +124,11 @@ module HealthCheck
         binding.pry
       end
       response[:errors] = errors.strip
-      return response
+      if check == "all" || check == "full"
+        return full_error_check
+      else
+        return response
+      end
       # return errors.strip
     rescue => e
       return e.message
