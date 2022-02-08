@@ -122,14 +122,15 @@ module HealthCheck
         elsif check == "standard"
           body = standard_error_check[:body]
           errors = standard_error_check[:errors]
-        end
-        body << {
-          name: check,
-          healthy: error_check == "",
-          error: error_check
-        }
-        errors << '. ' unless errors == '' || errors.end_with?('. ')
+        else
+          body << {
+            name: check,
+            healthy: error_check == "",
+            error: error_check
+          }
 
+          errors << '. ' unless errors == '' || errors.end_with?('. ')
+        end
         binding.pry
       end
       response[:errors] = errors.strip
