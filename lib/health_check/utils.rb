@@ -20,59 +20,83 @@ module HealthCheck
     # process an array containing a list of checks
     def self.process_checks(checks, called_from_middleware = false)
       errors = ''
+      response = {}
+      response[:body] ||= []
       checks.each do |check|
         case check
           when 'and', 'site'
             # do nothing
           when "database"
-            HealthCheck::Utils.get_database_version
+            error_check = HealthCheck::Utils.get_database_version
+            errors << error_check
           when "email"
-            errors << HealthCheck::Utils.check_email
+            error_check = HealthCheck::Utils.check_email
+            errors << error_check
           when "emailconf"
-            errors << HealthCheck::Utils.check_email if HealthCheck::Utils.mailer_configured?
+            error_check = HealthCheck::Utils.check_email if HealthCheck::Utils.mailer_configured?
+            errors << error_check
           when "migrations", "migration"
+            error_check = ""
             if defined?(ActiveRecord::Migration) and ActiveRecord::Migration.respond_to?(:check_pending!)
               # Rails 4+
               begin
                 ActiveRecord::Migration.check_pending!
               rescue ActiveRecord::PendingMigrationError => ex
+                  error_check = ex.message
                   errors << ex.message
               end
             else
               database_version  = HealthCheck::Utils.get_database_version
               migration_version = HealthCheck::Utils.get_migration_version
               if database_version.to_i != migration_version.to_i
-                errors << "Current database version (#{database_version}) does not match latest migration (#{migration_version}). "
+                message = "Current database version (#{database_version}) does not match latest migration (#{migration_version}). "
+                error_check = message
+                errors << message
               end
             end
           when 'cache'
-            errors << HealthCheck::Utils.check_cache
+            error_check = HealthCheck::Utils.check_cache
+            errors << error_check
           when 'resque-redis-if-present'
-            errors << HealthCheck::ResqueHealthCheck.check if defined?(::Resque)
+            error_check = HealthCheck::ResqueHealthCheck.check if defined?(::Resque)
+            errors << error_check
           when 'sidekiq-redis-if-present'
-            errors << HealthCheck::SidekiqHealthCheck.check if defined?(::Sidekiq)
+            error_check = HealthCheck::SidekiqHealthCheck.check if defined?(::Sidekiq)
+            errors << error_check
           when 'redis-if-present'
-            errors << HealthCheck::RedisHealthCheck.check if defined?(::Redis)
+            error_check = HealthCheck::RedisHealthCheck.check if defined?(::Redis)
+            errors << error_check
           when 's3-if-present'
-            errors << HealthCheck::S3HealthCheck.check if defined?(::Aws)
+            error_check = HealthCheck::S3HealthCheck.check if defined?(::Aws)
+            errors << error_check
           when 'elasticsearch-if-present'
-            errors << HealthCheck::ElasticsearchHealthCheck.check if defined?(::Elasticsearch)
+            error_check = HealthCheck::ElasticsearchHealthCheck.check if defined?(::Elasticsearch)
+            errors << error_check
           when 'resque-redis'
-            errors << HealthCheck::ResqueHealthCheck.check
+            error_check = HealthCheck::ResqueHealthCheck.check
+            errors << error_check
           when 'sidekiq-redis'
-            errors << HealthCheck::SidekiqHealthCheck.check
+            error_check = HealthCheck::SidekiqHealthCheck.check
+            errors << error_check
           when 'redis'
-            errors << HealthCheck::RedisHealthCheck.check
+            error_check = HealthCheck::RedisHealthCheck.check
+            errors << error_check
           when 's3'
-            errors << HealthCheck::S3HealthCheck.check
+            error_check = HealthCheck::S3HealthCheck.check
+            errors << error_check
           when 'elasticsearch'
-            errors << HealthCheck::ElasticsearchHealthCheck.check
+            error_check = HealthCheck::ElasticsearchHealthCheck.check
+            errors << error_check
           when 'rabbitmq'
-            errors << HealthCheck::RabbitMQHealthCheck.check
+            error_check = HealthCheck::RabbitMQHealthCheck.check
+            errors << error_check
           when "standard"
-            errors << HealthCheck::Utils.process_checks(HealthCheck.standard_checks, called_from_middleware)
+            error_check = HealthCheck::Utils.process_checks(HealthCheck.standard_checks, called_from_middleware)
+            errors << error_check
           when "middleware"
-            errors << "Health check not called from middleware - probably not installed as middleware." unless called_from_middleware
+            message = "Health check not called from middleware - probably not installed as middleware."
+            error_check = message unless called_from_middleware
+            errors << error_check
           when "custom"
             HealthCheck.custom_checks.each do |name, list|
               list.each do |custom_check|
@@ -80,7 +104,8 @@ module HealthCheck
               end
             end
           when "all", "full"
-            errors << HealthCheck::Utils.process_checks(HealthCheck.full_checks, called_from_middleware)
+            error_check = HealthCheck::Utils.process_checks(HealthCheck.full_checks, called_from_middleware)
+            errors << error_check
           else
             if HealthCheck.custom_checks.include? check
                HealthCheck.custom_checks[check].each do |custom_check|
@@ -89,10 +114,19 @@ module HealthCheck
             else
               return "invalid argument to health_test."
             end
+
         end
         errors << '. ' unless errors == '' || errors.end_with?('. ')
+
+        response[:body] << {
+          name: check,
+          healthy: true if error_check == "",
+          error: error_check
+        }
       end
-      return errors.strip
+      response[:errors] = errors.strip
+      return response
+      # return errors.strip
     rescue => e
       return e.message
     end
@@ -162,7 +196,7 @@ module HealthCheck
       t = Time.now.to_i
       value = "ok #{t}"
       ret = ::Rails.cache.read('__health_check_cache_test__')
-      if ret.to_s =~ /^ok (\d+)$/ 
+      if ret.to_s =~ /^ok (\d+)$/
         diff = ($1.to_i - t).abs
         return('Cache expiry is broken. ') if diff > 30
       elsif ret
@@ -170,7 +204,7 @@ module HealthCheck
       end
       if ::Rails.cache.write('__health_check_cache_test__', value, expires_in: 2.seconds)
         ret = ::Rails.cache.read('__health_check_cache_test__')
-        if ret =~ /^ok (\d+)$/ 
+        if ret =~ /^ok (\d+)$/
           diff = ($1.to_i - t).abs
           (diff < 2 ? '' : 'Out of date cache or time is skewed. ')
         else

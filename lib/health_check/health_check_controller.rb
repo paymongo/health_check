@@ -16,10 +16,10 @@ module HealthCheck
         last_modified = Time.at((last_modified.to_f / max_age).floor * max_age).utc
       end
       is_public = (max_age > 1) && ! HealthCheck.basic_auth_username
-      binding.pry
       if stale?(last_modified: last_modified, public: is_public)
         checks = params[:checks] ? params[:checks].split('_') : ['standard']
         checks -= HealthCheck.middleware_checks if HealthCheck.installed_as_middleware
+        binding.pry
         begin
           errors = HealthCheck::Utils.process_checks(checks)
         rescue Exception => e
