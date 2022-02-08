@@ -52,6 +52,7 @@ module HealthCheck
 
     def send_response(healthy, msg, text_status, obj_status)
       msg ||= healthy ? HealthCheck.success : HealthCheck.failure
+      binding.pry
       obj = { healthy: healthy, message: msg, object: HealthCheck}
       respond_to do |format|
         format.html { render plain: msg, status: text_status, content_type: 'text/plain' }
