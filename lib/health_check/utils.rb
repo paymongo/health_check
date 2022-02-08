@@ -130,8 +130,8 @@ module HealthCheck
         return response
       end
       # return errors.strip
-    rescue => e
-      return e.message
+    # rescue => e
+    #   return e.message
     end
 
     def self.db_migrate_path
