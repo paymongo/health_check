@@ -120,7 +120,7 @@ module HealthCheck
 
         response[:body] << {
           name: check,
-          healthy: true if error_check == "",
+          healthy: error_check == "",
           error: error_check
         }
       end
