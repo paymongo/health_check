@@ -19,13 +19,13 @@ module HealthCheck
       if stale?(last_modified: last_modified, public: is_public)
         checks = params[:checks] ? params[:checks].split('_') : ['standard']
         checks -= HealthCheck.middleware_checks if HealthCheck.installed_as_middleware
-        begin
+        # begin
           process_errors = HealthCheck::Utils.process_checks(checks)
           errors = process_errors[:errors]
-        rescue Exception => e
-          binding.pry
-          errors = e.message.blank? ? e.class.to_s : e.message.to_s
-        end
+        # rescue Exception => e
+        #   binding.pry
+        #   errors = e.message.blank? ? e.class.to_s : e.message.to_s
+        # end
         response.headers['Cache-Control'] = "must-revalidate, max-age=#{max_age}"
         if errors.blank?
           send_response true, nil, :ok, :ok, process_errors
