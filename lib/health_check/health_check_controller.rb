@@ -30,12 +30,12 @@ module HealthCheck
           if HealthCheck.success_callbacks
             HealthCheck.success_callbacks.each do |callback|
               callback.call(checks)
-            end 
+            end
           end
         else
           msg = HealthCheck.include_error_in_response_body ? "#{HealthCheck.failure}: #{errors}" : nil
           send_response false, msg, HealthCheck.http_status_for_error_text, HealthCheck.http_status_for_error_object
-          
+
           # Log a single line as some uptime checkers only record that it failed, not the text returned
           msg = "#{HealthCheck.failure}: #{errors}"
           logger.send(HealthCheck.log_level, msg) if logger && HealthCheck.log_level
@@ -52,7 +52,7 @@ module HealthCheck
 
     def send_response(healthy, msg, text_status, obj_status)
       msg ||= healthy ? HealthCheck.success : HealthCheck.failure
-      obj = { healthy: healthy, message: msg}
+      obj = { healthy: healthy, message: msg, object: HealthCheck}
       respond_to do |format|
         format.html { render plain: msg, status: text_status, content_type: 'text/plain' }
         format.json { render json: obj, status: obj_status }
