@@ -19,8 +19,9 @@ module HealthCheck
 
     # process an array containing a list of checks
     def self.process_checks(checks, called_from_middleware = false)
-      errors = ''
+      errors = ""
       error_check = ""
+      resource = ""
       response = {}
       body = []
       checks.each do |check|
