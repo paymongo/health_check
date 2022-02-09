@@ -3,12 +3,12 @@ module HealthCheck
     extend BaseHealthCheck
 
     class << self
-      def check
+      def check(resource)
         unless defined?(::Aws)
           raise "Wrong configuration. Missing 'aws-sdk' or 'aws-sdk-s3' gem"
         end
         return create_error 's3', 'Could not connect to aws' if aws_s3_client.nil?
-        HealthCheck.buckets.each do |bucket_name, permissions|
+        resource.each do |bucket_name, permissions|
           if permissions.nil? # backward compatible
             permissions = [:R, :W, :D]
           end

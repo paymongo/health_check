@@ -76,13 +76,16 @@ module HealthCheck
             error_check = HealthCheck::ResqueHealthCheck.check
             errors << error_check
           when 'sidekiq-redis'
+            resource = Sidekiq.redis { |conn| p conn.connection[:location] }
             error_check = HealthCheck::SidekiqHealthCheck.check
             errors << error_check
           when 'redis'
-            error_check = HealthCheck::RedisHealthCheck.check
+            resource = HealthCheck.redis_url
+            error_check = HealthCheck::RedisHealthCheck.check(resource)
             errors << error_check
           when 's3'
-            error_check = HealthCheck::S3HealthCheck.check
+            resource = HealthCheck.buckets
+            error_check = HealthCheck::S3HealthCheck.check(resource)
             errors << error_check
           when 'elasticsearch'
             error_check = HealthCheck::ElasticsearchHealthCheck.check
@@ -99,7 +102,8 @@ module HealthCheck
           when "custom"
             HealthCheck.custom_checks.each do |name, list|
               list.each do |custom_check|
-                errors << custom_check.call(self)
+                error_check = custom_check.call(self)
+                errors << error_check
               end
             end
           when "all", "full"
@@ -107,7 +111,8 @@ module HealthCheck
           else
             if HealthCheck.custom_checks.include? check
                HealthCheck.custom_checks[check].each do |custom_check|
-                 errors << custom_check.call(self)
+                error_check = custom_check.call(self)
+                errors << error_check
                end
             else
               return "invalid argument to health_test."
@@ -124,7 +129,8 @@ module HealthCheck
           body << {
             name: check,
             healthy: error_check == "",
-            error: error_check
+            error: error_check,
+            resource: resource
           }
 
           errors << '. ' unless errors == '' || errors.end_with?('. ')
@@ -132,11 +138,10 @@ module HealthCheck
       end
       response[:errors] = errors.strip
       response[:body] = body
-      binding.pry
       return response
-      # return errors.strip
-    # rescue => e
-    #   return e.message
+      return errors.strip
+    rescue => e
+      return e.message
     end
 
     def self.db_migrate_path
