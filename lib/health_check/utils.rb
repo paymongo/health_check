@@ -123,6 +123,7 @@ module HealthCheck
               return "invalid argument to health_test."
             end
         end
+        binding.pry
         if check == "all" || check == "full"
           body = full_error_check[:body]
           errors = full_error_check[:errors]
