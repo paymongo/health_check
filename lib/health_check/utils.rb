@@ -62,13 +62,16 @@ module HealthCheck
             error_check = HealthCheck::ResqueHealthCheck.check if defined?(::Resque)
             errors << error_check
           when 'sidekiq-redis-if-present'
+            resource = Sidekiq.redis { |conn| p conn.connection[:location] }
             error_check = HealthCheck::SidekiqHealthCheck.check if defined?(::Sidekiq)
             errors << error_check
           when 'redis-if-present'
+            resource = HealthCheck.redis_url
             error_check = HealthCheck::RedisHealthCheck.check if defined?(::Redis)
             errors << error_check
           when 's3-if-present'
-            error_check = HealthCheck::S3HealthCheck.check if defined?(::Aws)
+            resource = HealthCheck.buckets
+            error_check = HealthCheck::S3HealthCheck.check(resource) if defined?(::Aws)
             errors << error_check
           when 'elasticsearch-if-present'
             error_check = HealthCheck::ElasticsearchHealthCheck.check if defined?(::Elasticsearch)
