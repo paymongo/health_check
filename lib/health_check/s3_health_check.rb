@@ -3,7 +3,7 @@ module HealthCheck
     extend BaseHealthCheck
 
     class << self
-      def check(resource)
+      def check
         unless defined?(::Aws)
           raise "Wrong configuration. Missing 'aws-sdk' or 'aws-sdk-s3' gem"
         end

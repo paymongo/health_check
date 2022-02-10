@@ -19,10 +19,7 @@ module HealthCheck
 
     # process an array containing a list of checks
     def self.process_checks(checks, called_from_middleware = false)
-      errors = ""
-      error_check = ""
-      resource = ""
-      code = ""
+      errors, error_check, resource, code = "", "", "", ""
       response = {}
       body = []
       checks.each do |check|
@@ -68,11 +65,11 @@ module HealthCheck
             errors << error_check
           when 'redis-if-present'
             resource = HealthCheck.redis_url || ""
-            error_check = HealthCheck::RedisHealthCheck.check(resource) if defined?(::Redis)
+            error_check = HealthCheck::RedisHealthCheck.check if defined?(::Redis)
             errors << error_check
           when 's3-if-present'
             resource = HealthCheck.buckets || ""
-            error_check = HealthCheck::S3HealthCheck.check(resource) if defined?(::Aws)
+            error_check = HealthCheck::S3HealthCheck.check if defined?(::Aws)
             errors << error_check
           when 'elasticsearch-if-present'
             error_check = HealthCheck::ElasticsearchHealthCheck.check if defined?(::Elasticsearch)
@@ -86,11 +83,11 @@ module HealthCheck
             errors << error_check
           when 'redis'
             resource = HealthCheck.redis_url || ""
-            error_check = HealthCheck::RedisHealthCheck.check(resource)
+            error_check = HealthCheck::RedisHealthCheck.check
             errors << error_check
           when 's3'
             resource = HealthCheck.buckets || ""
-            error_check = HealthCheck::S3HealthCheck.check(resource)
+            error_check = HealthCheck::S3HealthCheck.check
             errors << error_check
           when 'elasticsearch'
             error_check = HealthCheck::ElasticsearchHealthCheck.check
