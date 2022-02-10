@@ -85,7 +85,7 @@ module HealthCheck
             errors << error_check
           when 'redis'
             resource = HealthCheck.redis_url
-            error_check = HealthCheck::RedisHealthCheck.check(resource)
+            error_check = HealthCheck::RedisHealthCheck.check
             errors << error_check
           when 's3'
             resource = HealthCheck.buckets
