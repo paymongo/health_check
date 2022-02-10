@@ -5,7 +5,7 @@ module HealthCheck
     extend BaseHealthCheck
 
     class << self
-      def check
+      def check(resource)
         raise "Wrong configuration. Missing 'redis' gem" unless defined?(::Redis)
 
         client.ping == 'PONG' ? '' : "Redis.ping returned #{res.inspect} instead of PONG"
@@ -15,10 +15,10 @@ module HealthCheck
         client.close if client.connected?
       end
 
-      def client
+      def client(resource)
         @client ||= Redis.new(
           {
-            url: HealthCheck.redis_url,
+            url: resource,
             password: HealthCheck.redis_password
           }.reject { |k, v| v.nil? }
         )

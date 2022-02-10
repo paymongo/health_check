@@ -66,11 +66,11 @@ module HealthCheck
             error_check = HealthCheck::SidekiqHealthCheck.check if defined?(::Sidekiq)
             errors << error_check
           when 'redis-if-present'
-            resource = HealthCheck.redis_url
-            error_check = HealthCheck::RedisHealthCheck.check if defined?(::Redis)
+            resource = HealthCheck.redis_url || ""
+            error_check = HealthCheck::RedisHealthCheck.check(resource) if defined?(::Redis)
             errors << error_check
           when 's3-if-present'
-            resource = HealthCheck.buckets
+            resource = HealthCheck.buckets || ""
             error_check = HealthCheck::S3HealthCheck.check(resource) if defined?(::Aws)
             errors << error_check
           when 'elasticsearch-if-present'
@@ -84,11 +84,11 @@ module HealthCheck
             error_check = HealthCheck::SidekiqHealthCheck.check
             errors << error_check
           when 'redis'
-            resource = HealthCheck.redis_url
-            error_check = HealthCheck::RedisHealthCheck.check
+            resource = HealthCheck.redis_url || ""
+            error_check = HealthCheck::RedisHealthCheck.check(resource)
             errors << error_check
           when 's3'
-            resource = HealthCheck.buckets
+            resource = HealthCheck.buckets || ""
             error_check = HealthCheck::S3HealthCheck.check(resource)
             errors << error_check
           when 'elasticsearch'
@@ -122,7 +122,6 @@ module HealthCheck
               return "invalid argument to health_test."
             end
         end
-        binding.pry
         if check == "all" || check == "full"
           body = full_error_check[:body]
           errors = full_error_check[:errors]
@@ -140,7 +139,6 @@ module HealthCheck
           errors << '. ' unless errors == '' || errors.end_with?('. ')
         end
       end
-      binding.pry
       response[:errors] = errors.strip
       response[:body] = body
       return response

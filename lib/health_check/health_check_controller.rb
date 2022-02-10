@@ -19,7 +19,6 @@ module HealthCheck
       if stale?(last_modified: last_modified, public: is_public)
         checks = params[:checks] ? params[:checks].split('_') : ['standard']
         checks -= HealthCheck.middleware_checks if HealthCheck.installed_as_middleware
-        binding.pry
         # begin
           process_errors = HealthCheck::Utils.process_checks(checks)
           errors = process_errors[:errors]
