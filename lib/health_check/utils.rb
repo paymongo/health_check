@@ -19,7 +19,7 @@ module HealthCheck
 
     # process an array containing a list of checks
     def self.process_checks(checks, called_from_middleware = false)
-      errors = ""
+      errors, error_check, resource, code = ""
       error_check = ""
       resource = ""
       response = {}
@@ -132,7 +132,10 @@ module HealthCheck
           body << {
             name: check,
             healthy: error_check == "",
-            error: error_check,
+            error: {
+              code: code,
+              message: error_check
+            },
             resource: resource
           }
 
